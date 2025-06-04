@@ -50,13 +50,13 @@ int changeToAbsolutePath(const char *outputfile, wchar_t *outputFileW) {
     //if the path is absolutepath before here, nothing change 
     DWORD len = GetFullPathNameA(outputfile, MAX_PATH, completePath, NULL);
     if (len == 0 || len > MAX_PATH) {
-        printf("[-] ERROR GetFullPathNameA failed\n");
+        printf("[-] ERROR GetFullPathNameA failed.\n");
         return 0;
     }
 
     //change to wchar_t*
     if (!MultiByteToWideChar(CP_ACP, 0, completePath, -1, outputFileW, MAX_PATH)) {
-        printf("[-] ERROR MultiByteToWideChar failed\n");
+        printf("[-] ERROR MultiByteToWideChar failed.\n");
         return 0;
     }
 
@@ -107,11 +107,16 @@ int main(int argc, char *argv[]){
             printf("[-] Could not open the specify path\n");
             return 1;
         }
-    }else if(strcmp(argv[1], "REMOTE") != 0){
+    }else{
+        //for now, its only local generation
+        return 1;
+    }
+    /*
+    else if(strcmp(argv[1], "REMOTE") != 0){
         //is not remote or local
         printf("[-] Not 'REMOTE' or 'LOCAL'\n");
         return 1;
-    }
+    }*/
 
     //printf("argv output code = %s", argv[3]);
 
