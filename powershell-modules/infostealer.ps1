@@ -112,6 +112,54 @@ function RunningProcess {
     return $info
 }
 
+function InterestingFiles {
+    [CmdletBinding()]
+    param ()
+
+    $info = @()
+    $allFiles = Get-ChildItem -Path $env:USERPROFILE -Recurse -Include *.txt,*.docx,*.xls*,*.csv -ErrorAction SilentlyContinue
+
+    $keywords = @(
+        '\bPASSWORD\b',
+        '\bPASSWD\b',
+        '\bPASS\b',
+        '\bPW\b',
+        '\bAPI[_-]?KEY\b',
+        '\bAPI[_-]?TOKEN\b',
+        '\bSECRET\b',
+        '\bAWS\b',
+        '\bACCESS[_-]?KEY\b',
+        '\bPRIVATE[_-]?KEY\b',
+        '\bTOKEN\b'
+    )
+
+    foreach ($file in $allFiles) {
+
+        $ruta = $file.FullName
+
+        if ($ruta -match '(?i)vscode|extensions|AppData|Program Files|Windows|node_modules|license|readme|notice|changelog|about|lang|locale|release|i18n|\.nfo') {
+            continue
+        }
+
+
+        foreach ($word in $keywords) {
+            try {
+                $matchesStrings = Select-String -Path $file.FullName -Pattern $word -ErrorAction Stop
+                foreach ($match in $matchesStrings) {
+                    $info += "File: $($file.FullName)"
+                    $info += "Line: $($match.Line.Trim())"
+                    $info += ""
+                }
+            } catch {
+                #this is because in some files maybe we dont have permissions, so we "silence" the errors
+            }
+        }
+    }
+
+    return $info
+    
+}
+
 # call for storing the information from function
 $info = @()
 $info = BasicReconInformation
@@ -119,6 +167,7 @@ $info += LocalUsers
 $info += InstalledSoftware
 $info += OpenPorts
 $info += RunningProcess
+$info += InterestingFiles
 
 # this is for debug
 ShowAllInformation -info $info
