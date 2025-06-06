@@ -117,6 +117,7 @@ function InterestingFiles {
     param ()
 
     $info = @()
+    $info += "== INTERESTING FILES =="
     $allFiles = Get-ChildItem -Path $env:USERPROFILE -Recurse -Include *.txt,*.docx,*.xls*,*.csv -ErrorAction SilentlyContinue
 
     $keywords = @(
@@ -160,6 +161,152 @@ function InterestingFiles {
     
 }
 
+function StartupPrograms {
+    [CmdletBinding()]
+    param ()
+
+    $info = @()
+    $info += "== STARTUP PROGRAMS (HKCU) =="
+
+    try {
+        $props = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run")
+        foreach ($p in $props.PSObject.Properties) {
+            $info += "Name: $($p.Name) | Command: $($p.Value)"
+        }
+    } catch {}
+    $info += ""
+
+
+    
+    $info += "== STARTUP PROGRAMS (HKLM) =="
+    try {
+        $props = (Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run")
+        foreach ($p in $props.PSObject.Properties) {
+            $info += "Name: $($p.Name) | Command: $($p.Value)"
+        }
+    } catch {}
+    $info += ""
+
+
+    return $info
+}
+
+function LocalNetworkInfo {
+    [CmdletBinding()]
+    param ()
+
+    $info = @()
+    $info += "== NETWORK INTERFACES =="
+
+    $ips = Get-NetIPAddress | Where-Object { $_.AddressFamily -eq "IPv4" -and $_.InterfaceAlias -notlike "*Loopback*" }
+    foreach ($ip in $ips) {
+        $info += "Interface: $($ip.InterfaceAlias) | IP: $($ip.IPAddress)"
+    }
+    $info += ""
+
+    return $info
+}
+
+function RunningServices {
+    [CmdletBinding()]
+    param ()
+
+    $info = @()
+    $info += "== RUNNING SERVICES =="
+
+    $services = Get-Service | Where-Object { $_.Status -eq "Running" }
+    foreach ($service in $services) {
+        $info += "Service: $($service.Name) - $($service.DisplayName)"
+    }
+    $info += ""
+
+    return $info
+}
+
+function AntivirusInfo {
+    [CmdletBinding()]
+    param ()
+
+    <#
+    HOW DOES IT WORK (productState):
+
+    0xAABBCC
+      | | |
+      | | +-- Real-time protection status (realTime)
+      | +---- Virus signature status (signature)
+      +------ General condition of the product (AV general condition)
+
+    #>
+
+    $info = @()
+    $info += "== ANTIVIRUS INFO =="
+
+    try {
+
+        $avProducts = (Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct)
+
+        foreach ($av in $avProducts) {
+            $info += "Name: $($av.displayName)"
+            $info += "Product State (raw): $($av.productState)"
+
+            $stateHex = "{0:X6}" -f $av.productState  # Format as 6-digit hex string
+            $protectionCode = $stateHex.Substring(4,2)  # Last byte (protection status)
+
+            switch ($protectionCode) {
+                "00" { $status = "Protection disabled" }
+                "10" { $status = "Protection enabled" }
+                "11" { $status = "Partial protection or error" }
+                default { $status = "Unknown status ($protectionCode)" }
+            }
+
+            $info += "AV Status interpretation: $status"
+            $info += "Reporting EXE: $($av.pathToSignedReportingExe)"
+            $info += "Product EXE: $($av.pathToSignedProductExe)"
+            $info += "Instance GUID: $($av.instanceGuid)"
+            $info += ""
+        }
+    } catch {}
+
+    return $info
+}
+
+
+function UACPolicy {
+    [CmdletBinding()]
+    param ()
+
+
+    $info = @()
+    $info += "== UAC POLICY =="
+
+    $interestingFlags = @(
+        "EnableLUA",
+        "ConsentPromptBehaviorAdmin",
+        "PromptOnSecureDesktop",
+        "FilterAdministratorToken",
+        "DisableCAD",
+        "DontDisplayLastUserName",
+        "LegalNoticeText",
+        "LegalNoticeCaption"
+    )
+    
+
+    try {
+        $data = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        foreach ($v in $interestingFlags) {
+
+            if ($data.PSObject.Properties.Name -contains $v) {
+                $info += "$v = $($data.$v)"
+            }
+
+        }
+    } catch {}
+    $info += ""
+
+    return $info
+    
+}
+
 # call for storing the information from function
 $info = @()
 $info = BasicReconInformation
@@ -168,6 +315,11 @@ $info += InstalledSoftware
 $info += OpenPorts
 $info += RunningProcess
 $info += InterestingFiles
+$info += StartupPrograms
+$info += LocalNetworkInfo
+$info += RunningServices
+$info += AntivirusInfo
+$info += UACPolicy
 
 # this is for debug
 ShowAllInformation -info $info
