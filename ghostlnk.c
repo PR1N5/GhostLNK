@@ -11,7 +11,6 @@
 #pragma comment(lib, "Shell32.lib");
 
 
-
 int checkOutputPath(char *outputPath){
 
     FILE *f = fopen(outputPath, "w");
@@ -30,7 +29,6 @@ int checkOutputPath(char *outputPath){
 
 int createTheLNKArguments(HRESULT hr, IShellLinkW *pShellLink, char *arguments){
 
-    //this set the path to the link, for now only execute cmd
     hr = pShellLink->lpVtbl->SetPath(pShellLink, L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
 
     if (FAILED(hr)){
@@ -70,7 +68,7 @@ int changeToAbsolutePath(const char *outputfile, wchar_t *outputFileW) {
     char completePath[MAX_PATH];
 
     //convert the path to absolute path
-    //if the path is absolutepath before here, nothing change 
+    //if the path is absolutepath before here, nothing change
     DWORD len = GetFullPathNameA(outputfile, MAX_PATH, completePath, NULL);
     if (len == 0 || len > MAX_PATH) {
         printf("[-] ERROR GetFullPathNameA failed\n");
@@ -89,6 +87,7 @@ int changeToAbsolutePath(const char *outputfile, wchar_t *outputFileW) {
 
 
 int createLNKFile(HRESULT hr, IShellLinkW *pShellLink, char *outputfile){
+    
     IPersistFile *pPersistFile;
     hr = pShellLink->lpVtbl->QueryInterface(pShellLink, &IID_IPersistFile, (void **)&pPersistFile);
     if (FAILED(hr)) {
@@ -124,8 +123,6 @@ int createLNKFile(HRESULT hr, IShellLinkW *pShellLink, char *outputfile){
 
 int main(int argc, char *argv[]){
 
-    //to-do: change this with params like "-o" and "-c"
-
     if(argc != 4){
         printf("Example of usage:\n\t%s <LOCAL/REMOTE> <OUTPUT_FILE> <CODE_EXECUTION>\n\n", argv[0]);
         return 1;
@@ -141,8 +138,6 @@ int main(int argc, char *argv[]){
         printf("[-] Not 'REMOTE' or 'LOCAL'\n");
         return 1;
     }
-
-    //printf("argv output code = %s", argv[3]);
 
     //this is for COM (component object model)
     HRESULT hr = CoInitialize(NULL);
