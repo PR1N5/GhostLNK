@@ -12,9 +12,8 @@ HTTP_PORT = 13313 # this is the port hosting the modules
 TCP_PORT = 8080 # this is the port receiving the final data
 SHARED_DIR = "powershell-modules" # path to the modules
 
-# --------------------------
-# 		Server HTTP
-# --------------------------
+
+# -------------------------- Server HTTP --------------------------
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path):
@@ -34,9 +33,8 @@ def run_http_server():
         httpd.serve_forever()
 
 
-# --------------------------
-# 		Server TCP
-# --------------------------
+
+# -------------------------- Server TCP --------------------------
 
 def run_tcp_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -69,9 +67,10 @@ def run_tcp_server():
                 except Exception as e:
                     print(f"[!] ERROR: {e}")
 
-# --------------------------
-# 		  Threads
-# --------------------------
+
+
+# -------------------------- THREADS --------------------------
+
 if __name__ == "__main__":
     try:
         threading.Thread(target=run_http_server, daemon=True).start()
